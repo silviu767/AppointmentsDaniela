@@ -13,5 +13,5 @@ class Photo(Base):
 
     __table_args__ = (
         CheckConstraint("kind IN ('gallery', 'work')", name="valid_kind"), 
-        CheckConstraint("appointment_od is NULL or kind = 'work'", name="appointment_only_for_work")
+        CheckConstraint("appointment_id is NULL or kind = 'work'", name="appointment_only_for_work")
     )
