@@ -18,4 +18,5 @@ class User(Base):
     __table_args__ = (
         CheckConstraint("email IS NOT NULL OR phone IS NOT NULL", name ="email_or_phone_required"),
         CheckConstraint("role IN('client', 'admin')", name="valid_role"),
+        CheckConstraint("password_hash is NULL or email IS NOT NULL", name="account_requires_email")
     )
