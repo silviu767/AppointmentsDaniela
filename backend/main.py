@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from database import engine 
+from backend.database import engine 
 from sqlalchemy import text
 
 app = FastAPI(title = "Programari Salon Daniela")
@@ -19,4 +19,4 @@ def test_db_connection():
                 "message": "Conexiunea cu PostgreSQL a reusit",
             }
     except Exception as e:
-        return{"status": "error", "mesage": str(e)}
+        return{"status": "error", "message": str(e)}
