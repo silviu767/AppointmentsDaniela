@@ -1,13 +1,13 @@
 from datetime import datetime 
 from pydantic import BaseModel, ConfigDict, EmailStr
-
+#ce intra de la client
 class UserCreate(BaseModel):
     email: EmailStr
     phone: str | None = None
     first_name: str
     last_name: str
     password: str
-
+#ce pleaca pe browser
 class UserOut(BaseModel):
     user_id: int 
     email: str | None = None
