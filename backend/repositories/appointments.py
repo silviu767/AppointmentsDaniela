@@ -9,5 +9,16 @@ def create_appointment(db: Session, appointment: Appointment):
     db.add(appointment)
     db.commit()
     db.refresh(appointment)
-    
+
     return appointment
+
+def get_appointments_by_user(db: Session, user_id: int):
+    return db.query(Appointment).filter(Appointment.user_id == user_id).order_by(Appointment.starts_at).all()
+
+def get_appointment_by_id(db: Session, appointment_id: int):
+    return db.query(Appointment).filter(Appointment.appointment_id == appointment_id).first()
+
+def update_appointment(db: Session, appoinntment: Appointment):
+    db.commit()
+    db.refresh(appoinntment)
+    return appoinntment

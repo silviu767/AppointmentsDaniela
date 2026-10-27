@@ -1,4 +1,4 @@
-from datetime import timedelta
+from datetime import timedelta, datetime
 from fastapi import HTTPException, Depends
 from sqlalchemy.orm import Session 
 from backend.models.appointments import Appointment
@@ -9,7 +9,9 @@ from backend.services.slots import get_available_slots, BUSINESS_TZ
 from sqlalchemy.exc import IntegrityError
 from backend.repositories import services as services_repository 
 
-def create_appointments(db: Session, appointment_data: AppointmentCreate, current_user: User):
+def create_appointments(db: Session, 
+                        appointment_data: AppointmentCreate, 
+                        current_user: User):
     #primul paznic
     service = services_repository.get_active_service_by_id(db, appointment_data.service_id)
 
@@ -41,11 +43,34 @@ def create_appointments(db: Session, appointment_data: AppointmentCreate, curren
     
     try:
         return appointment_repository.create_appointment(db, new_appointment)
-    
     except IntegrityError:
         db.rollback()
-
         raise HTTPException(status_code=409,
                             detail="Acest interval tocmai a fost ocupat!")
     
+def get_my_appointments(db: Session, current_user: User):
+   return appointment_repository.get_appointments_by_user(db, current_user.user_id)
 
+def cancel_appointment(db: Session, appointment_id: int, current_user: User):
+    appointment = appointment_repository.get_appointment_by_id(db, appointment_id)
+
+    if appointment is None:
+        raise HTTPException(status_code= 404,
+                            detail="Programarea nu a fost gasita")
+
+    if appointment.user_id != current_user.user_id:
+        raise HTTPException(status_code= 403,
+                            detail="Acces interzis la programarea altcuiva")
+
+    if appointment.status not in ["pending", "confirmed"]:
+        raise HTTPException(status_code=400,
+                            detail="Aceasta programare nu mai poate fi anulata")
+
+    now = datetime.now(BUSINESS_TZ)
+    if appointment.starts_at <= now + timedelta(hours=24):
+        raise HTTPException(status_code=400,
+                            detail="Programarea poate fi anulata doar cu cel putin 24 de ore inainte")
+
+    appointment.status = "cancelled_by_client"
+
+    return appointment_repository.update_appointment(db, appointment)
