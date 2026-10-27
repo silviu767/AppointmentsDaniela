@@ -11,6 +11,7 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from backend.database import get_db
 import os 
 from dotenv import load_dotenv
+# from config import SECRET_KEY
 
 ph = PasswordHasher()
 load_dotenv()
@@ -23,6 +24,7 @@ def register_user(db: Session, user_data: UserCreate):
     if existing_user is not None:
         raise HTTPException(status_code=400,
                             detail="Acest email este deja folosit")
+    
     hashed_password = ph.hash(user_data.password)
 
     new_user = User(email = user_data.email,
