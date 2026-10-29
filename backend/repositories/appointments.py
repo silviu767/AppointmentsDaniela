@@ -22,3 +22,6 @@ def update_appointment(db: Session, appoinntment: Appointment):
     db.commit()
     db.refresh(appoinntment)
     return appoinntment
+
+def get_all_appointments(db: Session):
+    return db.query(Appointment).order_by(Appointment.starts_at).all()

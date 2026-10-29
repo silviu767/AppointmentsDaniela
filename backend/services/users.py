@@ -77,3 +77,9 @@ def get_current_user(
         raise HTTPException(status_code=401, detail="Utilizatorul nu a fost gasit")
     
     return user
+
+def get_current_admin(current_user: User = Depends(get_current_user)):
+    if current_user.role != "admin":
+        raise HTTPException(status_code=403,
+                            detail="Acces interzis!")
+    return current_user
