@@ -1,6 +1,7 @@
 from pydantic import BaseModel, ConfigDict
 from datetime import datetime   
 from decimal import Decimal
+from typing import Literal
 
 class AppointmentCreate(BaseModel):
     service_id: int
@@ -20,3 +21,6 @@ class AppointmentOut(BaseModel):
     created_at: datetime
     
     model_config = ConfigDict(from_attributes=True)
+
+class AppointmentStatusUpdate(BaseModel):   
+    status: Literal['confirmed', 'cancelled_by_admin', 'no_show', 'completed']

@@ -3,7 +3,7 @@ from fastapi import HTTPException, Depends
 from sqlalchemy.orm import Session 
 from backend.models.appointments import Appointment
 from backend.repositories import appointments as appointment_repository
-from backend.schemas.appointments import AppointmentCreate
+from backend.schemas.appointments import AppointmentCreate, AppointmentStatusUpdate
 from backend.models.users import User
 from backend.services.slots import get_available_slots, BUSINESS_TZ
 from sqlalchemy.exc import IntegrityError
@@ -72,5 +72,21 @@ def cancel_appointment(db: Session, appointment_id: int, current_user: User):
                             detail="Programarea poate fi anulata doar cu cel putin 24 de ore inainte")
 
     appointment.status = "cancelled_by_client"
+
+    return appointment_repository.update_appointment(db, appointment)
+
+def get_all_appointments(db: Session):
+    return appointment_repository.get_all_appointments(db)
+
+def update_appointment_status(db: Session,
+                              appointment_id: int,
+                              status_data: AppointmentStatusUpdate):
+    appointment = appointment_repository.get_appointment_by_id(db, appointment_id)
+
+    if appointment is None:
+        raise HTTPException(status_code=404,
+                            detail="Programarea nu a fost gasita!")
+    
+    appointment.status = status_data.status
 
     return appointment_repository.update_appointment(db, appointment)
