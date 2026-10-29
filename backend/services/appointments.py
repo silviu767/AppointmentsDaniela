@@ -87,6 +87,10 @@ def update_appointment_status(db: Session,
         raise HTTPException(status_code=404,
                             detail="Programarea nu a fost gasita!")
     
+    if appointment.status not in ["pending", "confirmed"]:
+            raise HTTPException(status_code=400,
+                                detail="Aceasta programare nu mai poate fi anulata")
+    
     appointment.status = status_data.status
 
     return appointment_repository.update_appointment(db, appointment)

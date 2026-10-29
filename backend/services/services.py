@@ -31,7 +31,12 @@ def update_service(db: Session, service_id: int, service_data: ServiceUpdate):
         raise HTTPException(status_code=404,
                             detail="Serviciul nu a fost gasit")
     updates = service_data.model_dump(exclude_unset=True)
-
+    info = ("name", "duration_minutes", "price")
+    for field in info:
+        if field in updates and updates[field] is None:
+            raise HTTPException(status_code= 400,
+                                detail = f"Campul {field} nu poate fi gol")
+        
     if "name" in updates and updates["name"] != service.name:
         existing_service = services_repository.get_service_by_name(db, updates["name"])
         if existing_service is not None:
