@@ -10,6 +10,8 @@ from backend.schemas.blocked_periods import BlockedPeriodCreate, BlockedPeriodOu
 from backend.services import blocked_periods as blocked_period_service
 from backend.schemas.working_hours import WorkingHourCreate, WorkingHourOut
 from backend.services import working_hours as working_hours_service
+from backend.schemas.photos import PhotoOut, PhotoCreate
+from backend.services import photos as photos_services
 
 router = APIRouter(prefix="/api/admin",
                    tags=["Admin"],
@@ -87,3 +89,15 @@ def create_working_hour(working_hour_data: WorkingHourCreate,
 def delete_working_hour(working_hour_id: int,
                         db: Session = Depends(get_db)):
     return working_hours_service.delete_working_hour(db, working_hour_id)
+@router.post("/photos",
+            response_model=PhotoOut,
+             status_code= 201 )
+
+def create_photo(photo_data: PhotoCreate, db: Session = Depends(get_db)):
+    return photos_services.create_photo(db, photo_data)
+
+@router.delete("/photos/{photo_id}",
+               status_code= 204)
+
+def delete_photo(photo_id: int , db: Session = Depends(get_db)):
+    return photos_services.delete_photo(db, photo_id)
