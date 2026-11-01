@@ -12,6 +12,8 @@ from backend.schemas.working_hours import WorkingHourCreate, WorkingHourOut
 from backend.services import working_hours as working_hours_service
 from backend.schemas.photos import PhotoOut, PhotoCreate
 from backend.services import photos as photos_services
+from backend.schemas.reviews import ReviewOut, ReviewStatusUpdate
+from backend.services import reviews as reviews_services
 
 router = APIRouter(prefix="/api/admin",
                    tags=["Admin"],
@@ -101,3 +103,16 @@ def create_photo(photo_data: PhotoCreate, db: Session = Depends(get_db)):
 
 def delete_photo(photo_id: int , db: Session = Depends(get_db)):
     return photos_services.delete_photo(db, photo_id)
+
+@router.get("/reviews",
+            response_model= list[ReviewOut])
+
+def get_all_reviews(db: Session = Depends(get_db)):
+    return reviews_services.get_all_reviews(db)
+
+@router.patch("/reviews/{review_id}/status",
+              response_model= ReviewOut)
+
+def update_review_status(review_id: int, status_data: ReviewStatusUpdate, 
+                         db: Session = Depends(get_db)):
+    return reviews_services.update_review_status(db, review_id, status_data)
