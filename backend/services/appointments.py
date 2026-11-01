@@ -151,5 +151,5 @@ def create_admin_appointment(db: Session, appointment_data: AdminAppointmentCrea
          return appointment_repository.create_user_and_appointment(db, new_client, new_appointment)
     except IntegrityError:
           db.rollback()
-    raise HTTPException(status_code=409,
+          raise HTTPException(status_code=409,
                         detail="Acest interval tocmai a fost ocupat")
