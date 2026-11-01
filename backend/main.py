@@ -5,6 +5,8 @@ from backend.routers.users import router as users_router
 from backend.routers.appointments import router as appointments_router
 from backend.routers.admin import router as admin_router
 from backend.routers.photos import router as photos_router
+from backend.routers.reviews import router as review_router
+
 app = FastAPI(title = "Programari Salon Daniela")
 
 app.include_router(slots_router)
@@ -13,3 +15,4 @@ app.include_router(users_router)
 app.include_router(appointments_router)
 app.include_router(admin_router)
 app.include_router(photos_router)
+app.include_router(review_router)
