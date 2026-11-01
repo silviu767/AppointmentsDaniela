@@ -5,7 +5,7 @@ from datetime import datetime
 class ReviewCreate(BaseModel):
     appointment_id: int
     rating: int = Field(ge=1, le=5)
-    comment: str | None = None
+    comment: str | None = Field(default = None, max_length= 1000)
 
 class ReviewStatusUpdate(BaseModel):
     status: Literal["approved", "rejected"]

@@ -16,7 +16,6 @@ class User(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
     __table_args__ = (
-        CheckConstraint("email IS NOT NULL OR phone IS NOT NULL", name ="email_or_phone_required"),
         CheckConstraint("role IN('client', 'admin')", name="valid_role"),
         CheckConstraint("password_hash is NULL or email IS NOT NULL", name="account_requires_email")
     )

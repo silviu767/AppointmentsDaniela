@@ -1,13 +1,15 @@
 from datetime import timedelta, datetime
-from fastapi import HTTPException, Depends
+from fastapi import HTTPException
 from sqlalchemy.orm import Session 
 from backend.models.appointments import Appointment
 from backend.repositories import appointments as appointment_repository
-from backend.schemas.appointments import AppointmentCreate, AppointmentStatusUpdate
+from backend.schemas.appointments import AppointmentCreate, AppointmentStatusUpdate, AdminAppointmentCreate
 from backend.models.users import User
-from backend.services.slots import get_available_slots, BUSINESS_TZ
+from backend.services.slots import get_available_slots, BUSINESS_TZ, BUFFER_MINUTES
 from sqlalchemy.exc import IntegrityError
 from backend.repositories import services as services_repository 
+from backend.repositories import working_hours as working_hours_repository 
+from backend.repositories import blocked_periods as blocked_periods_repository 
 
 def create_appointments(db: Session, 
                         appointment_data: AppointmentCreate, 
@@ -86,11 +88,68 @@ def update_appointment_status(db: Session,
     if appointment is None:
         raise HTTPException(status_code=404,
                             detail="Programarea nu a fost gasita!")
+    if appointment.status == status_data.status:
+        raise HTTPException(status_code=400,
+                        detail="Programarea are deja acest status")
     
     if appointment.status not in ["pending", "confirmed"]:
             raise HTTPException(status_code=400,
-                                detail="Aceasta programare nu mai poate fi anulata")
+                                detail="Aceasta programare este deja inchisa si nu mai poate fi modificata")
     
     appointment.status = status_data.status
 
     return appointment_repository.update_appointment(db, appointment)
+
+def create_admin_appointment(db: Session, appointment_data: AdminAppointmentCreate):
+    service = services_repository.get_active_service_by_id(db, appointment_data.service_id)
+    if service is None:
+        raise HTTPException(status_code=404,
+                            detail="Serviciul nu a fost gasit")
+    if appointment_data.starts_at.tzinfo is None:
+            starts_at = appointment_data.starts_at.replace(tzinfo=BUSINESS_TZ)
+    else:
+            starts_at = appointment_data.starts_at.astimezone(BUSINESS_TZ)
+    if starts_at < datetime.now(BUSINESS_TZ):
+        raise HTTPException(status_code=400,
+                        detail="Nu poti crea o programare in trecut")
+    
+    ends_at = starts_at + timedelta(minutes=service.duration_minutes)
+
+    working_hours = working_hours_repository.get_working_hours_for_day(db, starts_at.weekday())
+    if starts_at.date() != ends_at.date() or not any(wh.starts_at <= starts_at.time() and ends_at.time() <= wh.ends_at for wh in working_hours):
+         raise HTTPException(status_code=400,
+                             detail="Intervalul ales este in afara orelor de program")
+
+    day_start = starts_at.replace(hour = 0, minute= 0, second = 0, microsecond = 0)
+    day_end = day_start + timedelta(days = 1)
+    busy_until = ends_at + timedelta(minutes =BUFFER_MINUTES)
+
+    blocked_periods = blocked_periods_repository.get_blocked_periods_for_day(db, day_start, day_end)
+    for bp in blocked_periods:
+         if starts_at < bp.ends_at and busy_until > bp.starts_at:
+              raise HTTPException(status_code=400,
+                                  detail="Intervalul se suprapune cu o perioada blocata")
+    existing_appointments = appointment_repository.get_active_appointments_for_day(db, day_start, day_end)
+    for app in existing_appointments:
+         if starts_at < app.ends_at + timedelta(minutes = BUFFER_MINUTES) and busy_until > app.starts_at:
+              raise HTTPException(status_code=409,
+                                  detail="Aces interval se suprapune cu o alta programare!")
+
+    new_client = User(
+                    first_name=appointment_data.first_name,
+                    last_name=appointment_data.last_name)
+
+    new_appointment = Appointment(
+                                service_id=service.service_id,
+                                starts_at=starts_at,
+                                ends_at=ends_at,
+                                price_at_booking=service.price,
+                                status="confirmed",
+                                notes=appointment_data.notes)
+
+    try:
+         return appointment_repository.create_user_and_appointment(db, new_client, new_appointment)
+    except IntegrityError:
+          db.rollback()
+    raise HTTPException(status_code=409,
+                        detail="Acest interval tocmai a fost ocupat")

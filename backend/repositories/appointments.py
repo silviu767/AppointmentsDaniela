@@ -1,6 +1,7 @@
 from datetime import datetime
 from sqlalchemy.orm import Session
 from backend.models.appointments import Appointment
+from backend.models.users import User
 
 def get_active_appointments_for_day(db: Session, day_start: datetime, day_end: datetime):
     return db.query(Appointment).filter(Appointment.starts_at < day_end, Appointment.ends_at >day_start, Appointment.status.in_(['pending', 'confirmed'])).order_by(Appointment.starts_at).all()
@@ -18,10 +19,19 @@ def get_appointments_by_user(db: Session, user_id: int):
 def get_appointment_by_id(db: Session, appointment_id: int):
     return db.query(Appointment).filter(Appointment.appointment_id == appointment_id).first()
 
-def update_appointment(db: Session, appoinntment: Appointment):
+def update_appointment(db: Session, appointment: Appointment):
     db.commit()
-    db.refresh(appoinntment)
-    return appoinntment
+    db.refresh(appointment)
+    return appointment
 
 def get_all_appointments(db: Session):
     return db.query(Appointment).order_by(Appointment.starts_at).all()
+
+def create_user_and_appointment(db: Session, user: User, appointment: Appointment):
+    db.add(user)
+    db.flush()
+    appointment.user_id = user.user_id
+    db.add(appointment)
+    db.commit()
+    db.refresh(appointment)
+    return appointment

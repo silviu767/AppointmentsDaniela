@@ -1,7 +1,8 @@
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 from datetime import datetime   
 from decimal import Decimal
 from typing import Literal
+
 
 class AppointmentCreate(BaseModel):
     service_id: int
@@ -24,3 +25,10 @@ class AppointmentOut(BaseModel):
 
 class AppointmentStatusUpdate(BaseModel):   
     status: Literal['confirmed', 'cancelled_by_admin', 'no_show', 'completed']
+
+class AdminAppointmentCreate(BaseModel):
+    first_name: str = Field(min_length=1)
+    last_name: str = Field(min_length=1)
+    service_id: int
+    starts_at: datetime
+    notes: str | None = None

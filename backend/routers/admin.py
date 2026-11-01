@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from backend.database import get_db
-from backend.schemas.appointments import AppointmentOut, AppointmentStatusUpdate
+from backend.schemas.appointments import AppointmentOut, AppointmentStatusUpdate, AdminAppointmentCreate
 from backend.services import appointments as appointments_service
 from backend.services import users as user_service 
 from backend.schemas.services import    AdminServiceOut, ServiceCreate, ServiceUpdate
@@ -32,6 +32,14 @@ def update_appointment_status(appointment_id: int,
                               status_data: AppointmentStatusUpdate, 
                               db: Session = Depends(get_db)):
     return appointments_service.update_appointment_status(db, appointment_id, status_data)
+
+@router.post("/appointments",
+             response_model=AppointmentOut,
+             status_code= 201)
+def create_admin_appointment(appointment_data: AdminAppointmentCreate, 
+                             db: Session = Depends(get_db)):
+    return appointments_service.create_admin_appointment(db, appointment_data)
+
 
 @router.get("/services", 
             response_model=list[AdminServiceOut])

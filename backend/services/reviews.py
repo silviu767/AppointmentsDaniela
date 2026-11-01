@@ -5,6 +5,7 @@ from backend.models.users import User
 from backend.schemas.reviews import ReviewCreate, ReviewStatusUpdate
 from backend.repositories import reviews as reviews_repository
 from backend.repositories import appointments as appointments_repository
+from sqlalchemy.exc import IntegrityError
 
 def get_approved_reviews(db: Session):
     return reviews_repository.get_approved_reviews(db)
@@ -34,8 +35,13 @@ def create_review(db:Session, review_data: ReviewCreate, current_user: User):
     new_review = Review(appointment_id = review_data.appointment_id,
                         rating = review_data.rating,
                         comment = review_data.comment)
-   
-    return reviews_repository.create_review(db, new_review)
+
+    try: 
+        return reviews_repository.create_review(db, new_review)
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(status_code=409, 
+                            detail= "Exista deja o recenzi la aceasta programare")
 
 def get_all_reviews(db: Session):
     return reviews_repository.get_all_reviews(db)
