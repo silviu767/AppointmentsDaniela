@@ -1,11 +1,9 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import declarative_base
 from sqlalchemy.orm import sessionmaker
+from backend.config.config import DATABASE_URL
 
-SQLALCHEMY_DATABASE_URL = (
-    "postgresql+psycopg2://silviantataru:@localhost:5432/appointments"
-)
-engine = create_engine(SQLALCHEMY_DATABASE_URL)
+engine = create_engine(DATABASE_URL)
 
 SessionLocal = sessionmaker(autoflush = False, bind = engine)
 

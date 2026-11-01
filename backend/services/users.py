@@ -9,13 +9,10 @@ import jwt
 from argon2.exceptions import VerifyMismatchError
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from backend.database import get_db
-import os 
-from dotenv import load_dotenv
-# from config import SECRET_KEY
+from backend.config.config import SECRET_KEY
 
 ph = PasswordHasher()
-load_dotenv()
-SECRET_KEY = os.getenv("SECRET_KEY")
+
 ALGORITHM = "HS256"
 security = HTTPBearer()
 

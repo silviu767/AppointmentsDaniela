@@ -1,10 +1,10 @@
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 from typing import Literal
 from datetime import datetime
 
 class PhotoCreate(BaseModel):
     kind: Literal["gallery", "work"]
-    image_url: str
+    image_url: str = Field(min_length= 1)
     appointment_id: int | None = None
 
 class PhotoOut(BaseModel):

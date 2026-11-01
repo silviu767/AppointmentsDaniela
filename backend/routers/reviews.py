@@ -11,7 +11,7 @@ router = APIRouter(prefix="/api/reviews",
 @router.get("",
             response_model=list[ReviewOut])
 
-def get_aproved_reviews(db: Session = Depends(get_db)):
+def get_approved_reviews(db: Session = Depends(get_db)):
     return reviews_services.get_approved_reviews(db)
 
 @router.post("",
