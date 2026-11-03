@@ -26,8 +26,10 @@ from backend.models.blocked_periods import BlockedPeriod
 from backend.models.appointments import Appointment
 from backend.models.reviews import Review
 from backend.models.photos import Photo
+from backend.config.config import DATABASE_URL
 
 target_metadata = Base.metadata
+config.set_main_option("sqlalchemy.url", DATABASE_URL)
 
 # other values from the config, defined by the needs of env.py,
 # can be acquired:
