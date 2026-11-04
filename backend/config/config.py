@@ -10,3 +10,5 @@ FRONTEND_URL = os.getenv("FRONTEND_URL",
 
 REDIS_URL = os.getenv("REDIS_URL", 
                       "redis://localhost:6379") 
+
+RESEND_API_KEY = os.getenv("RESEND_API_KEY")

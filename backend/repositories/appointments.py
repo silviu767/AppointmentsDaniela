@@ -35,3 +35,6 @@ def create_user_and_appointment(db: Session, user: User, appointment: Appointmen
     db.commit()
     db.refresh(appointment)
     return appointment
+
+def get_upcoming_appointments(db: Session, now: datetime, window_end: datetime):
+    return db.query(Appointment).filter(Appointment.starts_at >= now, Appointment.starts_at <= window_end, Appointment.status == "confirmed").all()
