@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, BackgroundTasks
 from sqlalchemy.orm import Session
 from backend.database import get_db
 from backend.schemas.appointments import AppointmentOut, AppointmentStatusUpdate, AdminAppointmentCreate
@@ -14,6 +14,8 @@ from backend.schemas.photos import PhotoOut, PhotoCreate
 from backend.services import photos as photos_services
 from backend.schemas.reviews import ReviewOut, ReviewStatusUpdate
 from backend.services import reviews as reviews_services
+from backend.services.email import send_appointment_confirmed_email, send_appointment_cancelled_by_admin_email
+from backend.repositories import users as users_repository
 
 router = APIRouter(prefix="/api/admin",
                    tags=["Admin"],
@@ -29,9 +31,20 @@ def get_all_appointments(db: Session = Depends(get_db)):
               response_model=AppointmentOut)
 
 def update_appointment_status(appointment_id: int, 
+                              backgroud_task: BackgroundTasks,
                               status_data: AppointmentStatusUpdate, 
-                              db: Session = Depends(get_db)):
-    return appointments_service.update_appointment_status(db, appointment_id, status_data)
+                              db: Session = Depends(get_db)
+                              ):
+    updated = appointments_service.update_appointment_status(db, appointment_id, status_data)
+    if status_data.status == "confirmed":
+        user = users_repository.get_user_by_id(db, updated.user_id)
+        if user and user.email is not None:
+            backgroud_task.add_task(send_appointment_confirmed_email, user.email, user.first_name, str(updated.starts_at))
+    elif status_data.status == "cancelled_by_admin":
+        user = users_repository.get_user_by_id(db, updated.user_id)
+        if user and user.email is not None:
+            backgroud_task.add_task(send_appointment_cancelled_by_admin_email, user.email, user.first_name, str(updated.starts_at))
+    return updated
 
 @router.post("/appointments",
              response_model=AppointmentOut,
