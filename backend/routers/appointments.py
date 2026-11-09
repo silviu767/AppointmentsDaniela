@@ -6,7 +6,7 @@ from backend.services import appointments as appointments_service
 from backend.services import users as user_service
 from backend.schemas.photos import PhotoOut
 from backend.services import photos as photos_service
-from backend.services.email import send_appointment_received_email, send_admin_new_appointment_email
+from backend.services.email import send_appointment_received_email, send_admin_new_appointment_email, send_admin_appointment_cancelled_by_client_email
 from backend.repositories import users as users_repository
 
 router = APIRouter(prefix="/api/appointments", tags=["Appointments"])
@@ -40,10 +40,16 @@ def get_appointments(db: Session = Depends(get_db),
 @router.post("/{appointment_id}/cancel",
              response_model= AppointmentOut)
 
-def cancel_appointment(appointment_id: int, 
+def cancel_appointment(background_task: BackgroundTasks, appointment_id: int, 
                        db: Session = Depends(get_db), 
                        current_user = Depends(user_service.get_current_user)):
-    return appointments_service.cancel_appointment(db, appointment_id, current_user)
+    cancelled = appointments_service.cancel_appointment(db, appointment_id, current_user)
+    admin = users_repository.get_admin_user(db)
+
+    if admin and admin.email is not None:
+        background_task.add_task(send_admin_appointment_cancelled_by_client_email, admin.email, current_user.first_name, str(cancelled.starts_at))
+
+    return cancelled
 
 @router.get("/{appointment_id}/photos",
             response_model=list[PhotoOut])
