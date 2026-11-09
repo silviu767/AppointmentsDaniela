@@ -45,3 +45,25 @@ def send_appointment_cancelled_by_admin_email(to_email:str, client_name: str, st
                         "subject": "Informare programare - Salon Daniela",
                         "html": f"Buna {client_name}, din pacate programarea ta pentru {starts_at_str} nu a putut fi confirmata sau a fost anulata de catre salon. Ne cerem scuze pentru neplaceri!"})
     
+def send_admin_new_appointment_email(to_email: str, client_name: str, starts_at: str):
+    if RESEND_API_KEY is None :
+        print(f"Programare noua de la {client_name}")
+        return
+     
+    resend.api_key = RESEND_API_KEY
+    resend.Emails.send({"from": "Salon Daniela <onboarding@resend.dev>",
+                        "to": [to_email],
+                       "subject": "Aveti o noua programare in asteptare - Salon Daniela",
+                       "html": f"{client_name}, a facut o programare pe data de {starts_at} si asteapta aprobarea"})
+
+def send_admin_new_review_email(to_email: str, rating:int, comment:str | None ):
+    if RESEND_API_KEY is None :
+            print(f"Recenzie  noua asteapta aprobarea")
+            return
+    
+    resend.api_key = RESEND_API_KEY
+    resend.Emails.send({    "from": "Salon Daniela <onboarding@resend.dev>",
+                            "to": [to_email],
+                           "subject": "Recenzie noua de aprobat - Salon Daniela",
+                           "html": f" Recenzie cu {rating} stele , si cu comentariul: {comment} asteapta aprobarea"})
+    

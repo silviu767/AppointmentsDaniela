@@ -6,7 +6,8 @@ from backend.services import appointments as appointments_service
 from backend.services import users as user_service
 from backend.schemas.photos import PhotoOut
 from backend.services import photos as photos_service
-from backend.services.email import send_appointment_received_email
+from backend.services.email import send_appointment_received_email, send_admin_new_appointment_email
+from backend.repositories import users as users_repository
 
 router = APIRouter(prefix="/api/appointments", tags=["Appointments"])
 
@@ -19,7 +20,16 @@ def create_appointment(appointment_data: AppointmentCreate,
     appointment = appointments_service.create_appointments(db, appointment_data, current_user)
 
     background_task.add_task(send_appointment_received_email, current_user.email, current_user.first_name, str(appointment.starts_at))
+    
+    admin = users_repository.get_admin_user(db)
+
+    if admin and admin.email is not None:
+        background_task.add_task(send_admin_new_appointment_email, admin.email, current_user.first_name, str(appointment.starts_at))
+    
     return appointment
+
+   
+
 
 @router.get("/me", response_model=list[AppointmentOut])
 
