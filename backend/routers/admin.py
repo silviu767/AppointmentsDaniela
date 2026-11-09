@@ -1,4 +1,5 @@
-from fastapi import APIRouter, Depends, BackgroundTasks
+from fastapi import APIRouter, Depends, BackgroundTasks, UploadFile, File, Form
+from typing import Literal
 from sqlalchemy.orm import Session
 from backend.database import get_db
 from backend.schemas.appointments import AppointmentOut, AppointmentStatusUpdate, AdminAppointmentCreate
@@ -16,6 +17,7 @@ from backend.schemas.reviews import ReviewOut, ReviewStatusUpdate
 from backend.services import reviews as reviews_services
 from backend.services.email import send_appointment_confirmed_email, send_appointment_cancelled_by_admin_email
 from backend.repositories import users as users_repository
+from backend.services import storage as storage_service
 
 router = APIRouter(prefix="/api/admin",
                    tags=["Admin"],
@@ -116,7 +118,13 @@ def delete_working_hour(working_hour_id: int,
             response_model=PhotoOut,
              status_code= 201 )
 
-def create_photo(photo_data: PhotoCreate, db: Session = Depends(get_db)):
+def create_photo(file: UploadFile = File(), kind: Literal["gallery", "work"] = Form(), appointment_id: int | None = Form(None),  db: Session = Depends(get_db)):
+    image_url = storage_service.upload_photo_file(file)
+
+    photo_data = PhotoCreate( kind = kind,
+                             image_url =image_url,
+                             appointment_id=appointment_id)
+    
     return photos_services.create_photo(db, photo_data)
 
 @router.delete("/photos/{photo_id}",

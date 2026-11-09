@@ -11,9 +11,14 @@ from backend.config.config import FRONTEND_URL
 from backend.limiter import limiter
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
+import os
+from fastapi.staticfiles import StaticFiles
 
 
 app = FastAPI(title = "Programari Salon Daniela")
+os.makedirs("uploads", exist_ok= True)
+app.mount("/uploads", StaticFiles(directory="uploads"),
+          name="uploads")
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 app.add_middleware(CORSMiddleware, allow_origins=[FRONTEND_URL], allow_credentials=True,
