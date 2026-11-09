@@ -12,3 +12,6 @@ def create_user(db: Session, user: User):
 
 def get_user_by_id(db: Session, user_id: int):
     return db.query(User).filter(User.user_id == user_id).first()
+
+def get_admin_user(db:Session):
+    return db.query(User).filter(User.role == "admin").first()
