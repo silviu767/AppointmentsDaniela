@@ -1,6 +1,7 @@
 from pydantic import BaseModel, ConfigDict, Field
 from typing import Literal
 from datetime import datetime
+from backend.schemas.photos import PhotoOut
 
 class ReviewCreate(BaseModel):
     appointment_id: int
@@ -17,4 +18,5 @@ class ReviewOut(BaseModel):
     comment: str | None = None
     status: str
     created_at: datetime
+    photos: list[PhotoOut] = []
     model_config = ConfigDict(from_attributes=True)

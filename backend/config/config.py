@@ -1,8 +1,9 @@
 import os
 from dotenv import load_dotenv
-from fastapi import HTTPException
 load_dotenv()
 SECRET_KEY = os.getenv("SECRET_KEY")
+if SECRET_KEY is None or len(SECRET_KEY) < 32:
+    raise RuntimeError("SECRET_KEY lipseste sau este prea scurt (minim 32 caractere)!")
 DATABASE_URL = os.getenv("DATABASE_URL",
                          "postgresql+psycopg2://silviantataru:@localhost:5432/appointments")
 

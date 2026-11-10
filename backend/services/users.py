@@ -65,7 +65,7 @@ def get_current_user(
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         user_id = int(payload.get("sub"))
 
-    except jwt.PyJWTError:
+    except (jwt.PyJWTError, TypeError, ValueError):
         raise HTTPException(status_code=401, detail="Token invalid sau expirat")
 
     user = user_repository.get_user_by_id(db, user_id)

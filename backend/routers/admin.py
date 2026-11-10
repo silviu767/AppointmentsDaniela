@@ -33,7 +33,7 @@ def get_all_appointments(db: Session = Depends(get_db)):
               response_model=AppointmentOut)
 
 def update_appointment_status(appointment_id: int, 
-                              backgroud_task: BackgroundTasks,
+                              background_task: BackgroundTasks,
                               status_data: AppointmentStatusUpdate, 
                               db: Session = Depends(get_db)
                               ):
@@ -41,11 +41,11 @@ def update_appointment_status(appointment_id: int,
     if status_data.status == "confirmed":
         user = users_repository.get_user_by_id(db, updated.user_id)
         if user and user.email is not None:
-            backgroud_task.add_task(send_appointment_confirmed_email, user.email, user.first_name, str(updated.starts_at))
+            background_task.add_task(send_appointment_confirmed_email, user.email, user.first_name, str(updated.starts_at))
     elif status_data.status == "cancelled_by_admin":
         user = users_repository.get_user_by_id(db, updated.user_id)
         if user and user.email is not None:
-            backgroud_task.add_task(send_appointment_cancelled_by_admin_email, user.email, user.first_name, str(updated.starts_at))
+            background_task.add_task(send_appointment_cancelled_by_admin_email, user.email, user.first_name, str(updated.starts_at))
     return updated
 
 @router.post("/appointments",
@@ -119,13 +119,7 @@ def delete_working_hour(working_hour_id: int,
              status_code= 201 )
 
 def create_photo(file: UploadFile = File(), kind: Literal["gallery", "work"] = Form(), appointment_id: int | None = Form(None),  db: Session = Depends(get_db)):
-    image_url = storage_service.upload_photo_file(file)
-
-    photo_data = PhotoCreate( kind = kind,
-                             image_url =image_url,
-                             appointment_id=appointment_id)
-    
-    return photos_services.create_photo(db, photo_data)
+    return photos_services.create_photo(db, file, kind, appointment_id)
 
 @router.delete("/photos/{photo_id}",
                status_code= 204)

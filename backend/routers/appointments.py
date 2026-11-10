@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, BackgroundTasks
+from fastapi import APIRouter, Depends, BackgroundTasks, UploadFile, File
 from sqlalchemy.orm import Session
 from backend.database import get_db
 from backend.schemas.appointments import AppointmentCreate, AppointmentOut
@@ -58,3 +58,12 @@ def get_photo_by_appointments(appointment_id: int,
                               db: Session = Depends(get_db),
                               current_user = Depends(user_service.get_current_user)):
     return photos_service.get_photo_by_appointment(db, appointment_id, current_user)
+
+@router.post("/{appointment_id}/photos",
+              response_model= PhotoOut,
+                status_code= 201)
+
+def uload_appointment_photo(appointment_id: int, file: UploadFile = File(), 
+                            db: Session = Depends(get_db), 
+                            current_user = Depends(user_service.get_current_user)):
+    return photos_service.create_client_work_photo(db, appointment_id, file, current_user)

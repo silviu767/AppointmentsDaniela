@@ -9,7 +9,6 @@ router = APIRouter(prefix="/api/photos", tags=["Photos"])
 
 @router.get("", response_model= list[PhotoOut])
 
-def get_photos(kind: Literal["gallery", "work"] | None = None, 
-               db: Session = Depends(get_db)):
-    return photos_service.get_photos(db, kind)
+def get_photos( db: Session = Depends(get_db)):
+    return photos_service.get_photos(db)
 

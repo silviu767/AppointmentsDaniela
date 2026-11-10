@@ -1,7 +1,7 @@
 from sqlalchemy import Column, String, Text, DateTime, Integer, CheckConstraint, ForeignKey
 from sqlalchemy.sql import func
 from backend.database import Base
-
+from sqlalchemy.orm import relationship
 class Review(Base):
     __tablename__ = "reviews"
 
@@ -11,7 +11,7 @@ class Review(Base):
     comment = Column(Text, nullable=True )
     status = Column(String, nullable=False, server_default="pending")
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
-
+    photos = relationship("Photo", primaryjoin = "Review.appointment_id == foreign(Photo.appointment_id)",  viewonly= True )
     __table_args__ = (
         CheckConstraint("rating BETWEEN 1 AND 5", name="rating_between_1_and_5"),
         CheckConstraint("status IN ('pending', 'approved', 'rejected')",
