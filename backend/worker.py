@@ -24,8 +24,11 @@ def process_reminders():
             user = user_repository.get_user_by_id(db, app.user_id)
 
             if user and user.email is not None:
-                send_reminder_email(user.email, user.first_name, str(app.starts_at))
-                redis_client.setex(redis_key, 86400, "sent")
+                try :
+                    send_reminder_email(user.email, user.first_name, str(app.starts_at))
+                    redis_client.setex(redis_key, 86400, "sent")
+                except Exception as e:
+                    print(f"Eroare la trimiterea remider-ului pentru programarea {app.appointment_id}: {e}")
 
     finally:
         db.close()

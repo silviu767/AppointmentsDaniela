@@ -95,6 +95,10 @@ def update_appointment_status(db: Session,
     if appointment.status not in ["pending", "confirmed"]:
             raise HTTPException(status_code=400,
                                 detail="Aceasta programare este deja inchisa si nu mai poate fi modificata")
+   
+    if status_data.status in ["completed", "no_show"] and appointment.starts_at > datetime.now(BUSINESS_TZ):
+         raise HTTPException(status_code= 400,
+                             detail="Nu poti marca sau finaliza sau neprezenta o programare din viitor")
     
     appointment.status = status_data.status
 
