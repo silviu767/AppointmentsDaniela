@@ -1,5 +1,4 @@
 from fastapi import APIRouter, Depends
-from typing import Literal
 from sqlalchemy.orm import Session
 from backend.database import get_db
 from backend.schemas.photos import PhotoOut

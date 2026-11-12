@@ -1,6 +1,7 @@
 from sqlalchemy import Column, String, Text, DateTime, Integer, CheckConstraint, ForeignKey
 from sqlalchemy.sql import func
 from backend.database import Base
+from backend.models.photos import Photo
 from sqlalchemy.orm import relationship
 class Review(Base):
     __tablename__ = "reviews"

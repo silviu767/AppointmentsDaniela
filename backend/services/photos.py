@@ -4,7 +4,6 @@ from backend.services import storage as storage_service
 from sqlalchemy.orm import  Session
 from backend.models.photos import Photo
 from backend.models.users import User
-from backend.schemas.photos import PhotoCreate
 from backend.repositories import photos as photos_repository
 from backend.repositories import appointments as appointments_repository 
 
@@ -17,7 +16,11 @@ def create_photo(db: Session, file: UploadFile,
     if kind == "gallery" and appointment_id is not None:
         raise HTTPException(status_code= 400,
                             detail="Pozele de tip gallery nu pot fi asociate unei programari")
-
+    
+    if kind == "work" and appointment_id is None:
+        raise HTTPException(status_code=400,
+                            detail="Pozele de tip work trebuie asociate unei programari")
+    
     if appointment_id is not None:
         appointment = appointments_repository.get_appointment_by_id(db, appointment_id)
         if appointment is None:

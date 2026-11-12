@@ -11,13 +11,12 @@ from backend.schemas.blocked_periods import BlockedPeriodCreate, BlockedPeriodOu
 from backend.services import blocked_periods as blocked_period_service
 from backend.schemas.working_hours import WorkingHourCreate, WorkingHourOut
 from backend.services import working_hours as working_hours_service
-from backend.schemas.photos import PhotoOut, PhotoCreate
+from backend.schemas.photos import PhotoOut
 from backend.services import photos as photos_services
 from backend.schemas.reviews import ReviewOut, ReviewStatusUpdate
 from backend.services import reviews as reviews_services
 from backend.services.email import send_appointment_confirmed_email, send_appointment_cancelled_by_admin_email
 from backend.repositories import users as users_repository
-from backend.services import storage as storage_service
 
 router = APIRouter(prefix="/api/admin",
                    tags=["Admin"],
