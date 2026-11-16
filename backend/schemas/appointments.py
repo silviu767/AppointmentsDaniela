@@ -1,7 +1,17 @@
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, EmailStr, Field
 from datetime import datetime   
 from decimal import Decimal
 from typing import Literal
+
+
+class AppointmentClientOut(BaseModel):
+    user_id: int
+    first_name: str
+    last_name: str
+    email: str | None = None
+    phone: str | None = None
+
+    model_config = ConfigDict(from_attributes=True)
 
 
 class AppointmentCreate(BaseModel):
@@ -20,6 +30,7 @@ class AppointmentOut(BaseModel):
     status: str
     notes: str | None = None
     created_at: datetime
+    user: AppointmentClientOut | None = None
     
     model_config = ConfigDict(from_attributes=True)
 
@@ -29,6 +40,8 @@ class AppointmentStatusUpdate(BaseModel):
 class AdminAppointmentCreate(BaseModel):
     first_name: str = Field(min_length=1)
     last_name: str = Field(min_length=1)
+    phone: str | None = None
+    email: EmailStr | None = None
     service_id: int
     starts_at: datetime
     notes: str | None = None

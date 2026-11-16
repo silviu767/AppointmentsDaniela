@@ -1,4 +1,5 @@
 from sqlalchemy import Column, Integer, DateTime, Numeric, String, Text, CheckConstraint, ForeignKey, text
+from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from backend.database import Base
 from sqlalchemy.dialects.postgresql import ExcludeConstraint
@@ -15,6 +16,8 @@ class Appointment(Base):
     status = Column(String, nullable=False, server_default="pending")
     notes = Column(Text, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+    user = relationship("User", lazy="joined")
 
     __table_args__ = (
         CheckConstraint("price_at_booking >= 0", name="price_non_negative"),

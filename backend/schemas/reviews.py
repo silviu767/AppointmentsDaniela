@@ -18,5 +18,6 @@ class ReviewOut(BaseModel):
     comment: str | None = None
     status: str
     created_at: datetime
+    client_name: str | None = None
     photos: list[PhotoOut] = []
     model_config = ConfigDict(from_attributes=True)

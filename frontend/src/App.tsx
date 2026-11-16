@@ -1,34 +1,31 @@
-import Navbar from "./components/Navbar"
-import Hero from "./components/Hero"
-import {useState, useEffect} from "react"
-import ServicesSection from "./components/ServicesSection"
-import { getServices } from "./api/client"
-import type {Service} from "./types"
-import GallerySection from "./components/GallerySection"
-import ReviewSection from "./components/ReviewSection"
-import { getPhotos} from "./api/client"
-import { getApprovedReviews } from "./api/client"
-import type { Photo, Review } from "./types"
-import Footer from "./components/Footer"
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { AuthProvider } from './context/AuthContext'
+import { LanguageProvider } from './context/LanguageContext'
+import { HomePage } from './pages/HomePage'
+import { BookingPage } from './pages/BookingPage'
+import { AuthPage } from './pages/AuthPage'
+import { ClientDashboardPage } from './pages/ClientDashboardPage'
+import { AdminPage } from './pages/AdminPage'
+import { PrivacyPage } from './pages/PrivacyPage'
 
-function App(){
-  const [services, setServices] = useState<Service[]>([])
-  const [photos, setPhotos] = useState<Photo[]>([])
-  const [reviews, setReviews] = useState<Review[]>([])
-  useEffect(() => {
-    getServices().then((data) => setServices(data))
-    getPhotos().then((data) => setPhotos(data))
-    getApprovedReviews().then((data) => setReviews(data))
-  }, [])
-    return (
-      <div className = "min-h-screen bg-[#FAF8F5] text-[#1C1917]">
-        <Navbar />
-        <Hero />
-        <ServicesSection services={services} />
-        <GallerySection photos={photos} />
-        <ReviewSection reviews={reviews} />
-        <Footer />
-      </div>
-    )
+export function App() {
+  return (
+    <LanguageProvider>
+      <AuthProvider>
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<HomePage />} />
+            <Route path="/programare" element={<BookingPage />} />
+            <Route path="/autentificare" element={<AuthPage />} />
+            <Route path="/contul-meu" element={<ClientDashboardPage />} />
+            <Route path="/admin" element={<AdminPage />} />
+            <Route path="/privacy" element={<PrivacyPage />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </BrowserRouter>
+      </AuthProvider>
+    </LanguageProvider>
+  )
 }
+
 export default App
