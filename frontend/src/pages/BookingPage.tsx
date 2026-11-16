@@ -1,46 +1,22 @@
 import { useEffect, useState } from 'react'
-import { Link, useSearchParams } from 'react-router-dom'
+import { useSearchParams } from 'react-router-dom'
 import { Header } from '../components/Header'
 import { Footer } from '../components/Footer'
 import { useAuth } from '../context/AuthContext'
-import { useLanguage, translateServiceName } from '../context/LanguageContext'
+import { useLanguage } from '../context/LanguageContext'
 import { getServices, getAvailableSlots, createAppointment } from '../api/client'
 import type { Service, Slot } from '../types'
-
-function pad(n: number) {
-  return String(n).padStart(2, '0')
-}
-
-function dateKey(d: Date) {
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
-}
-
-function formatPrice(price: string | number): string {
-  const num = Number(price)
-  if (Number.isNaN(num)) return `${price}€`
-  return Number.isInteger(num) ? `${num}€` : `${num.toFixed(0)}€`
-}
-
-function formatSlotTime(iso: string): string {
-  try {
-    const d = new Date(iso)
-    return d.toLocaleTimeString('ro-RO', {
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: false,
-      timeZone: 'Europe/Paris',
-    })
-  } catch {
-    return iso.slice(11, 16)
-  }
-}
+import { StepServiceSelect } from '../components/booking/StepServiceSelect'
+import { StepDateAndSlot } from '../components/booking/StepDateAndSlot'
+import { StepClientDetails } from '../components/booking/StepClientDetails'
+import { StepBookingSuccess } from '../components/booking/StepBookingSuccess'
 
 export function BookingPage() {
   const [searchParams] = useSearchParams()
   const preselectedId = searchParams.get('service_id')
 
   const { user, token, login, register } = useAuth()
-  const { lang, t } = useLanguage()
+  const { t } = useLanguage()
   const b = t.booking
 
   const [pas, setPas] = useState<number>(1)
@@ -169,7 +145,12 @@ export function BookingPage() {
         throw new Error(b.errAuthFailed)
       }
 
-      await createAppointment(activeToken, selectedService.service_id, selectedSlot.starts_at, notes.trim() || undefined)
+      await createAppointment(
+        activeToken,
+        selectedService.service_id,
+        selectedSlot.starts_at,
+        notes.trim() || undefined
+      )
       setPas(4)
       window.scrollTo({ top: 0, behavior: 'smooth' })
     } catch (err: unknown) {
@@ -187,48 +168,6 @@ export function BookingPage() {
     setSelectedSlot(null)
     setNotes('')
     setErrorMsg(null)
-  }
-
-  const renderCalendarDays = () => {
-    let start = new Date(calAn, calLuna, 1).getDay()
-    if (start === 0) start = 7
-    const emptyCells = Array.from({ length: start - 1 }, (_, i) => i)
-    const zileInLuna = new Date(calAn, calLuna + 1, 0).getDate()
-    const aziDate = new Date(azi.getFullYear(), azi.getMonth(), azi.getDate())
-
-    const days = Array.from({ length: zileInLuna }, (_, i) => i + 1)
-
-    return (
-      <>
-        {b.daysShort.map((z) => (
-          <div key={z} className="day-name">
-            {z}
-          </div>
-        ))}
-        {emptyCells.map((i) => (
-          <div key={`empty-${i}`} className="day empty"></div>
-        ))}
-        {days.map((z) => {
-          const data = new Date(calAn, calLuna, z)
-          const key = dateKey(data)
-          const isPast = data < aziDate
-          const isToday = data.toDateString() === azi.toDateString()
-          const isSelected = selectedDateKey === key
-
-          return (
-            <div
-              key={key}
-              className={`day ${isPast ? 'past' : ''} ${isToday ? 'today' : ''} ${isSelected ? 'selected' : ''}`}
-              onClick={() => {
-                if (!isPast) handleSelectZi(key, z)
-              }}
-            >
-              {z}
-            </div>
-          )
-        })}
-      </>
-    )
   }
 
   return (
@@ -287,354 +226,89 @@ export function BookingPage() {
             </div>
           )}
 
-          {/* STEP 1: SERVICIU */}
           {pas === 1 && (
-            <div>
-              <h2>{b.step1Title}</h2>
-              <p className="pg-card-sub">{b.step1Sub}</p>
-
-              {loadingServices ? (
-                <p className="loading-text">{b.loadingServices}</p>
-              ) : services.length === 0 ? (
-                <p className="loading-text">{b.noActiveServices}</p>
-              ) : (
-                <div className="servicii-list">
-                  {services.map((s) => (
-                    <div
-                      key={s.service_id}
-                      className="svc-item"
-                      onClick={() => {
-                        setSelectedService(s)
-                        setSelectedDateKey(null)
-                        setSelectedDayNum(null)
-                        setSelectedSlot(null)
-                        setErrorMsg(null)
-                        setPas(2)
-                        window.scrollTo({ top: 0, behavior: 'smooth' })
-                      }}
-                    >
-                      <div className="svc-info">
-                        <span className="svc-nome">{translateServiceName(s.name, lang)}</span>
-                        <span className="svc-dur">
-                          {s.duration_minutes} {t.home.minutes}
-                        </span>
-                      </div>
-                      <span className="svc-price">{formatPrice(s.price)}</span>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
+            <StepServiceSelect
+              services={services}
+              loading={loadingServices}
+              onSelectService={(s) => {
+                setSelectedService(s)
+                setSelectedDateKey(null)
+                setSelectedDayNum(null)
+                setSelectedSlot(null)
+                setErrorMsg(null)
+                setPas(2)
+                window.scrollTo({ top: 0, behavior: 'smooth' })
+              }}
+            />
           )}
 
-          {/* STEP 2: CALENDAR & SLOTS */}
           {pas === 2 && selectedService && (
-            <div>
-              <button
-                type="button"
-                className="btn-back"
-                onClick={() => {
-                  setPas(1)
-                  setErrorMsg(null)
-                }}
-              >
-                {b.back}
-              </button>
-              <h2>{b.step2Title}</h2>
-              <p className="pg-card-sub">
-                {b.selectedServiceLabel}{' '}
-                <strong style={{ color: 'var(--roz)' }}>{translateServiceName(selectedService.name, lang)}</strong> (
-                {selectedService.duration_minutes} {t.home.minutes} · {formatPrice(selectedService.price)})
-              </p>
-
-              <div className="cal-nav">
-                <button type="button" onClick={() => schimbaLuna(-1)}>
-                  ←
-                </button>
-                <span>
-                  {b.months[calLuna]} {calAn}
-                </span>
-                <button type="button" onClick={() => schimbaLuna(1)}>
-                  →
-                </button>
-              </div>
-
-              <div className="cal-grid">{renderCalendarDays()}</div>
-
-              {selectedDateKey && (
-                <div className="ore-section">
-                  <h3>{b.chooseHour}</h3>
-                  <p className="ore-titlu">
-                    {b.availableHoursFor} {selectedDateLabel}
-                  </p>
-
-                  {loadingSlots ? (
-                    <p className="loading-text">{b.loadingSlots}</p>
-                  ) : slots.length === 0 ? (
-                    <p className="loading-text">{b.noSlots}</p>
-                  ) : (
-                    <div className="ore-grid">
-                      {slots.map((slot) => {
-                        const label = formatSlotTime(slot.starts_at)
-                        const isSel = selectedSlot?.starts_at === slot.starts_at
-                        return (
-                          <button
-                            type="button"
-                            key={slot.starts_at}
-                            className={`ora-btn ${isSel ? 'selected' : ''}`}
-                            onClick={() => {
-                              setSelectedSlot(slot)
-                              setErrorMsg(null)
-                              setTimeout(() => {
-                                setPas(3)
-                                window.scrollTo({ top: 0, behavior: 'smooth' })
-                              }, 200)
-                            }}
-                          >
-                            {label}
-                          </button>
-                        )
-                      })}
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
+            <StepDateAndSlot
+              selectedService={selectedService}
+              calAn={calAn}
+              calLuna={calLuna}
+              selectedDateKey={selectedDateKey}
+              selectedDateLabel={selectedDateLabel}
+              slots={slots}
+              loadingSlots={loadingSlots}
+              selectedSlot={selectedSlot}
+              onBack={() => {
+                setPas(1)
+                setErrorMsg(null)
+              }}
+              onChangeMonth={schimbaLuna}
+              onSelectDay={handleSelectZi}
+              onSelectSlot={(slot) => {
+                setSelectedSlot(slot)
+                setErrorMsg(null)
+                setTimeout(() => {
+                  setPas(3)
+                  window.scrollTo({ top: 0, behavior: 'smooth' })
+                }, 200)
+              }}
+            />
           )}
 
-          {/* STEP 3: DATELE TALE & AUTENTIFICARE */}
           {pas === 3 && selectedService && selectedSlot && (
-            <div>
-              <button
-                type="button"
-                className="btn-back"
-                onClick={() => {
-                  setPas(2)
-                  setErrorMsg(null)
-                }}
-              >
-                {b.back}
-              </button>
-              <h2>{b.step3Title}</h2>
-              <p className="pg-card-sub">{b.step3Sub}</p>
-
-              <div className="rezumat-box">
-                <strong>{translateServiceName(selectedService.name, lang)}</strong> ·{' '}
-                {formatPrice(selectedService.price)} ({selectedService.duration_minutes} {t.home.minutes})
-                <br />
-                {b.dateLabel} {selectedDateLabel} {b.atHour} <strong>{formatSlotTime(selectedSlot.starts_at)}</strong>
-              </div>
-
-              {user ? (
-                <div
-                  style={{
-                    background: 'var(--roz-pale)',
-                    border: '1px solid var(--border-mid)',
-                    borderRadius: '16px',
-                    padding: '16px 20px',
-                    marginBottom: '22px',
-                    fontSize: '14px',
-                  }}
-                >
-                  {b.loggedInAs}{' '}
-                  <strong style={{ color: 'var(--roz)' }}>
-                    {user.first_name} {user.last_name}
-                  </strong>{' '}
-                  ({user.email})
-                </div>
-              ) : (
-                <div style={{ marginBottom: '24px' }}>
-                  <div
-                    style={{
-                      display: 'flex',
-                      gap: '8px',
-                      marginBottom: '20px',
-                      background: 'var(--cream)',
-                      padding: '6px',
-                      borderRadius: '10px',
-                      border: '1px solid var(--border)',
-                    }}
-                  >
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setAuthMode('register')
-                        setErrorMsg(null)
-                      }}
-                      style={{
-                        flex: 1,
-                        padding: '10px',
-                        borderRadius: '8px',
-                        border: 'none',
-                        cursor: 'pointer',
-                        fontSize: '13px',
-                        fontWeight: 500,
-                        background: authMode === 'register' ? 'var(--roz)' : 'transparent',
-                        color: authMode === 'register' ? 'white' : 'var(--text-mid)',
-                        transition: 'all 0.2s',
-                      }}
-                    >
-                      Sign Up
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setAuthMode('login')
-                        setErrorMsg(null)
-                      }}
-                      style={{
-                        flex: 1,
-                        padding: '10px',
-                        borderRadius: '8px',
-                        border: 'none',
-                        cursor: 'pointer',
-                        fontSize: '13px',
-                        fontWeight: 500,
-                        background: authMode === 'login' ? 'var(--roz)' : 'transparent',
-                        color: authMode === 'login' ? 'white' : 'var(--text-mid)',
-                        transition: 'all 0.2s',
-                      }}
-                    >
-                      Log In
-                    </button>
-                  </div>
-
-                  {authMode === 'register' && (
-                    <>
-                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                        <div className="form-camp">
-                          <label>{b.firstName}</label>
-                          <input
-                            type="text"
-                            placeholder={b.firstNamePlaceholder}
-                            value={firstName}
-                            onChange={(e) => setFirstName(e.target.value)}
-                          />
-                        </div>
-                        <div className="form-camp">
-                          <label>{b.lastName}</label>
-                          <input
-                            type="text"
-                            placeholder={b.lastNamePlaceholder}
-                            value={lastName}
-                            onChange={(e) => setLastName(e.target.value)}
-                          />
-                        </div>
-                      </div>
-                      <div className="form-camp">
-                        <label>{b.phone}</label>
-                        <input
-                          type="tel"
-                          placeholder={b.phonePlaceholder}
-                          value={phone}
-                          onChange={(e) => setPhone(e.target.value)}
-                        />
-                      </div>
-                    </>
-                  )}
-
-                  <div className="form-camp">
-                    <label>{b.email}</label>
-                    <input
-                      type="email"
-                      placeholder={b.emailPlaceholder}
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                    />
-                  </div>
-                  <div className="form-camp">
-                    <label>
-                      {b.password} {authMode === 'register' ? b.min8Chars : ''}
-                    </label>
-                    <input
-                      type="password"
-                      placeholder="••••••••"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                    />
-                  </div>
-                </div>
-              )}
-
-              <div className="form-camp">
-                <label>{b.notes}</label>
-                <input
-                  type="text"
-                  placeholder={b.notesPlaceholder}
-                  value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
-                />
-              </div>
-
-              {/* Honeypot */}
-              <div style={{ position: 'absolute', left: '-9999px', opacity: 0, pointerEvents: 'none' }} aria-hidden="true">
-                <input
-                  type="text"
-                  tabIndex={-1}
-                  autoComplete="off"
-                  value={honeypot}
-                  onChange={(e) => setHoneypot(e.target.value)}
-                />
-              </div>
-
-              <p
-                className="privacy-notice"
-                style={{ fontSize: '12px', color: '#999', marginTop: '16px', lineHeight: 1.6 }}
-              >
-                {b.privacyPrefix}
-                <Link to="/privacy" target="_blank" style={{ color: 'var(--roz)', textDecoration: 'underline' }}>
-                  {b.privacyLink}
-                </Link>
-                {b.privacySuffix}
-              </p>
-
-              <button
-                type="button"
-                className="btn-confirma"
-                disabled={submitting}
-                onClick={handleConfirmBooking}
-              >
-                {submitting ? b.submittingBtn : b.confirmBtn}
-              </button>
-            </div>
+            <StepClientDetails
+              selectedService={selectedService}
+              selectedSlot={selectedSlot}
+              selectedDateLabel={selectedDateLabel}
+              user={user}
+              authMode={authMode}
+              setAuthMode={setAuthMode}
+              firstName={firstName}
+              setFirstName={setFirstName}
+              lastName={lastName}
+              setLastName={setLastName}
+              phone={phone}
+              setPhone={setPhone}
+              email={email}
+              setEmail={setEmail}
+              password={password}
+              setPassword={setPassword}
+              notes={notes}
+              setNotes={setNotes}
+              honeypot={honeypot}
+              setHoneypot={setHoneypot}
+              submitting={submitting}
+              onBack={() => {
+                setPas(2)
+                setErrorMsg(null)
+              }}
+              onClearError={() => setErrorMsg(null)}
+              onConfirm={handleConfirmBooking}
+            />
           )}
 
-          {/* STEP 4: SUCCESS */}
           {pas === 4 && selectedService && selectedSlot && (
-            <div className="success-wrap">
-              <div className="success-icon">✓</div>
-              <h2>{b.step4Title}</h2>
-              <p>
-                {b.thankYou} <strong style={{ color: 'var(--roz)' }}>{user?.first_name || firstName}</strong>!
-                <br />
-                {b.confirmSoon}
-                <br />
-                <span style={{ fontSize: '13px', color: '#888' }}>{b.trackStatus}</span>
-              </p>
-              <div className="rezumat-box" style={{ textAlign: 'left' }}>
-                <strong>{translateServiceName(selectedService.name, lang)}</strong> ·{' '}
-                {formatPrice(selectedService.price)}
-                <br />
-                {b.dateLabel} {selectedDateLabel} {b.atHour} <strong>{formatSlotTime(selectedSlot.starts_at)}</strong>
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', alignItems: 'center' }}>
-                <Link
-                  to="/contul-meu"
-                  className="btn-confirma"
-                  style={{ maxWidth: '300px', textDecoration: 'none', textAlign: 'center' }}
-                >
-                  {b.viewMyBookings}
-                </Link>
-                <button
-                  type="button"
-                  className="btn-back"
-                  style={{ margin: 0 }}
-                  onClick={resetApp}
-                >
-                  {b.bookAnother}
-                </button>
-              </div>
-            </div>
+            <StepBookingSuccess
+              selectedService={selectedService}
+              selectedSlot={selectedSlot}
+              selectedDateLabel={selectedDateLabel}
+              clientDisplayName={user?.first_name || firstName}
+              onReset={resetApp}
+            />
           )}
         </div>
       </main>
