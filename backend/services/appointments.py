@@ -10,6 +10,7 @@ from sqlalchemy.exc import IntegrityError
 from backend.repositories import services as services_repository 
 from backend.repositories import working_hours as working_hours_repository 
 from backend.repositories import blocked_periods as blocked_periods_repository 
+from backend.repositories import users as users_repository
 
 def create_appointments(db: Session, 
                         appointment_data: AppointmentCreate, 
@@ -139,9 +140,33 @@ def create_admin_appointment(db: Session, appointment_data: AdminAppointmentCrea
               raise HTTPException(status_code=409,
                                   detail="Aces interval se suprapune cu o alta programare!")
 
+    existing_user = None
+    if appointment_data.email:
+        existing_user = users_repository.get_user_by_email(db, appointment_data.email)
+
+    if existing_user:
+        if appointment_data.phone and not existing_user.phone:
+            existing_user.phone = appointment_data.phone
+        new_appointment = Appointment(
+            user_id=existing_user.user_id,
+            service_id=service.service_id,
+            starts_at=starts_at,
+            ends_at=ends_at,
+            price_at_booking=service.price,
+            status="confirmed",
+            notes=appointment_data.notes,
+        )
+        try:
+            return appointment_repository.create_appointment(db, new_appointment)
+        except IntegrityError:
+            db.rollback()
+            raise HTTPException(status_code=409, detail="Acest interval tocmai a fost ocupat")
+
     new_client = User(
                     first_name=appointment_data.first_name,
-                    last_name=appointment_data.last_name)
+                    last_name=appointment_data.last_name,
+                    phone=appointment_data.phone,
+                    email=appointment_data.email)
 
     new_appointment = Appointment(
                                 service_id=service.service_id,

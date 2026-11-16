@@ -13,6 +13,14 @@ class Review(Base):
     status = Column(String, nullable=False, server_default="pending")
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     photos = relationship("Photo", primaryjoin = "Review.appointment_id == foreign(Photo.appointment_id)",  viewonly= True )
+    appointment = relationship("Appointment", lazy="joined", viewonly=True)
+
+    @property
+    def client_name(self) -> str | None:
+        if self.appointment and self.appointment.user:
+            last_init = f" {self.appointment.user.last_name[0]}." if self.appointment.user.last_name else ""
+            return f"{self.appointment.user.first_name}{last_init}"
+        return None
     __table_args__ = (
         CheckConstraint("rating BETWEEN 1 AND 5", name="rating_between_1_and_5"),
         CheckConstraint("status IN ('pending', 'approved', 'rejected')",
