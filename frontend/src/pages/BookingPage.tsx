@@ -47,9 +47,10 @@ export function BookingPage() {
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
 
   useEffect(() => {
-    setLoadingServices(true)
+    let cancelled = false
     getServices()
       .then((data) => {
+        if (cancelled) return
         setServices(data)
         if (preselectedId) {
           const found = data.find((s) => String(s.service_id) === preselectedId)
@@ -60,10 +61,17 @@ export function BookingPage() {
         }
       })
       .catch((err) => {
-        setErrorMsg(err.message || b.noActiveServices)
+        if (!cancelled) {
+          setErrorMsg(err.message || b.noActiveServices)
+        }
       })
-      .finally(() => setLoadingServices(false))
-  }, [preselectedId])
+      .finally(() => {
+        if (!cancelled) setLoadingServices(false)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [preselectedId, b.noActiveServices])
 
   const schimbaLuna = (dir: number) => {
     let newLuna = calLuna + dir

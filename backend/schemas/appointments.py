@@ -2,6 +2,7 @@ from pydantic import BaseModel, ConfigDict, EmailStr, Field
 from datetime import datetime   
 from decimal import Decimal
 from typing import Literal
+from backend.schemas.photos import PhotoOut
 
 
 class AppointmentClientOut(BaseModel):
@@ -31,6 +32,8 @@ class AppointmentOut(BaseModel):
     notes: str | None = None
     created_at: datetime
     user: AppointmentClientOut | None = None
+    has_review: bool = False
+    photos: list[PhotoOut] = []
     
     model_config = ConfigDict(from_attributes=True)
 

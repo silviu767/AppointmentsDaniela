@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { Header } from '../components/Header'
 import { Footer } from '../components/Footer'
@@ -64,9 +64,8 @@ export function ClientDashboardPage() {
     }
   }, [authLoading, user, navigate])
 
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     if (!token) return
-    setLoading(true)
     try {
       const [apps, svcs] = await Promise.all([getMyAppointments(token), getServices()])
       const map: Record<number, Service> = {}
@@ -96,13 +95,13 @@ export function ClientDashboardPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [token])
 
   useEffect(() => {
     if (token && user?.role !== 'admin') {
-      loadData()
+      void Promise.resolve().then(() => loadData())
     }
-  }, [token, user?.role])
+  }, [token, user?.role, loadData])
 
   const handleCancel = async (appointmentId: number) => {
     if (!token) return
@@ -246,8 +245,8 @@ export function ClientDashboardPage() {
           <div className="cards-list">
             {appointments.map((app) => {
               const svc = servicesMap[app.service_id]
-              const photos = photosByApp[app.appointment_id] || []
-              const alreadyReviewed = reviewedApps[app.appointment_id]
+              const photos = photosByApp[app.appointment_id] || app.photos || []
+              const alreadyReviewed = Boolean(app.has_review || reviewedApps[app.appointment_id])
               return (
                 <div key={app.appointment_id} className={`prog-card status-${app.status}`}>
                   <div className="prog-info">

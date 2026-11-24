@@ -18,6 +18,12 @@ class Appointment(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
     user = relationship("User", lazy="joined")
+    review = relationship("Review", uselist=False, viewonly=True, lazy="joined")
+    photos = relationship("Photo", viewonly=True, lazy="selectin")
+
+    @property
+    def has_review(self) -> bool:
+        return self.review is not None
 
     __table_args__ = (
         CheckConstraint("price_at_booking >= 0", name="price_non_negative"),

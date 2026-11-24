@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import {
@@ -50,7 +50,7 @@ export function AdminPage() {
   const [blockedPeriods, setBlockedPeriods] = useState<BlockedPeriod[]>([])
   const [galleryPhotos, setGalleryPhotos] = useState<Photo[]>([])
   const [reviews, setReviews] = useState<Review[]>([])
-  const [loadingData, setLoadingData] = useState(false)
+  const [loadingData, setLoadingData] = useState(true)
 
   const [appFilter, setAppFilter] = useState<string>('toate')
   const [toast, setToast] = useState<{ msg: string; type: 'green' | 'red' | '' } | null>(null)
@@ -66,14 +66,13 @@ export function AdminPage() {
     }
   }, [authLoading, user, navigate])
 
-  const showToastMsg = (msg: string, type: 'green' | 'red' | '' = '') => {
+  const showToastMsg = useCallback((msg: string, type: 'green' | 'red' | '' = '') => {
     setToast({ msg, type })
     setTimeout(() => setToast(null), 3500)
-  }
+  }, [])
 
-  const loadAllAdminData = async () => {
+  const loadAllAdminData = useCallback(async () => {
     if (!token || user?.role !== 'admin') return
-    setLoadingData(true)
     try {
       const [apps, svcs, whs, bps, photos, revs] = await Promise.all([
         adminGetAllAppointments(token),
@@ -94,13 +93,13 @@ export function AdminPage() {
     } finally {
       setLoadingData(false)
     }
-  }
+  }, [token, user?.role, showToastMsg])
 
   useEffect(() => {
     if (token && user?.role === 'admin') {
-      loadAllAdminData()
+      void Promise.resolve().then(() => loadAllAdminData())
     }
-  }, [token, user?.role])
+  }, [token, user?.role, loadAllAdminData])
 
   // ===== HANDLERS =====
   const handleStatusChange = async (
@@ -144,6 +143,7 @@ export function AdminPage() {
     try {
       await adminUploadPhoto(token, file, 'work', appointmentId)
       showToastMsg('Poza lucrării a fost atașată programării!', 'green')
+      loadAllAdminData()
     } catch (err: unknown) {
       showToastMsg(err instanceof Error ? err.message : 'Eroare la încărcarea pozei', 'red')
     }

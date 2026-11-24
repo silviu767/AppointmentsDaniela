@@ -78,6 +78,8 @@ export interface Appointment {
   notes: string | null
   created_at: string
   user?: AppointmentClient | null
+  has_review?: boolean
+  photos?: Photo[]
 }
 
 export interface WorkingHour {

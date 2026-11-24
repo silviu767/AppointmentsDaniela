@@ -1,4 +1,5 @@
 import type { Appointment, AdminService } from '../../types'
+import { resolveImageUrl } from '../../api/client'
 import { STATUS_LABELS, formatDateTime, isSameDayParis } from './adminUtils'
 
 interface AppointmentsTabProps {
@@ -124,6 +125,30 @@ export function AppointmentsTab({
                     <span>Data: {formatDateTime(p.starts_at)}</span>
                     {p.notes && <span>Notă: {p.notes}</span>}
                   </div>
+                  {p.photos && p.photos.length > 0 && (
+                    <div style={{ display: 'flex', gap: '8px', marginTop: '8px', flexWrap: 'wrap' }}>
+                      {p.photos.map((ph) => (
+                        <a
+                          key={ph.photo_id}
+                          href={resolveImageUrl(ph.image_url)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          <img
+                            src={resolveImageUrl(ph.image_url)}
+                            alt="Lucrare"
+                            style={{
+                              width: '54px',
+                              height: '54px',
+                              objectFit: 'cover',
+                              borderRadius: '8px',
+                              border: '1px solid var(--border-mid)',
+                            }}
+                          />
+                        </a>
+                      ))}
+                    </div>
+                  )}
                 </div>
 
                 <div className="prog-actions">

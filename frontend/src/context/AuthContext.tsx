@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import { createContext, useContext, useState, useEffect, type ReactNode } from 'react'
 import type { User } from '../types'
 import { getCurrentUser, loginUser, registerUser } from '../api/client'
@@ -28,27 +29,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState<boolean>(!!localStorage.getItem(TOKEN_KEY))
 
   useEffect(() => {
-    if (!token) {
-      setUser(null)
-      setLoading(false)
-      return
-    }
     let cancelled = false
-    setLoading(true)
-    getCurrentUser(token)
-      .then((u) => {
+    async function verifySession() {
+      if (!token) {
+        await Promise.resolve()
+        if (!cancelled) {
+          setUser(null)
+          setLoading(false)
+        }
+        return
+      }
+      try {
+        const u = await getCurrentUser(token)
         if (!cancelled) setUser(u)
-      })
-      .catch(() => {
+      } catch {
         if (!cancelled) {
           localStorage.removeItem(TOKEN_KEY)
           setToken(null)
           setUser(null)
         }
-      })
-      .finally(() => {
+      } finally {
         if (!cancelled) setLoading(false)
-      })
+      }
+    }
+    void verifySession()
     return () => {
       cancelled = true
     }
