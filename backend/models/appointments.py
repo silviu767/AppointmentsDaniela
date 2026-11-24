@@ -3,6 +3,9 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from backend.database import Base
 from sqlalchemy.dialects.postgresql import ExcludeConstraint
+from backend.models.users import User  # noqa: F401
+from backend.models.photos import Photo  # noqa: F401
+from backend.models.reviews import Review  # noqa: F401
 
 class Appointment(Base):
     __tablename__ = "appointments"

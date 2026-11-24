@@ -50,9 +50,18 @@ def update_appointment_status(appointment_id: int,
 @router.post("/appointments",
              response_model=AppointmentOut,
              status_code= 201)
-def create_admin_appointment(appointment_data: AdminAppointmentCreate, 
+def create_admin_appointment(appointment_data: AdminAppointmentCreate,
+                             background_task: BackgroundTasks,
                              db: Session = Depends(get_db)):
-    return appointments_service.create_admin_appointment(db, appointment_data)
+    created = appointments_service.create_admin_appointment(db, appointment_data)
+    if appointment_data.email:
+        background_task.add_task(
+            send_appointment_confirmed_email,
+            appointment_data.email,
+            appointment_data.first_name,
+            str(created.starts_at),
+        )
+    return created
 
 
 @router.get("/services", 

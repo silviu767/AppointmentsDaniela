@@ -13,8 +13,8 @@ FRONTEND_URL = os.getenv("FRONTEND_URL",
 REDIS_URL = os.getenv("REDIS_URL", 
                       "redis://localhost:6379") 
 
-RESEND_API_KEY = os.getenv("RESEND_API_KEY")
-EMAIL_BACKEND = os.getenv("EMAIL_BACKEND", "console")
+RESEND_API_KEY = (os.getenv("RESEND_API_KEY") or "").strip() or None
+EMAIL_BACKEND = os.getenv("EMAIL_BACKEND", "console").strip()
 if EMAIL_BACKEND not in ["console", "resend"]:
     raise RuntimeError("EMAIL_BACKEND invalid!")
 
@@ -27,7 +27,7 @@ S3_SECRET_ACCESS_KEY = os.getenv("S3_SECRET_ACCESS_KEY")
 S3_BUCKET_NAME = os.getenv("S3_BUCKET_NAME")
 CDN_BASE_URL = os.getenv("CDN_BASE_URL")
 
-STORAGE_BACKEND = os.getenv("STORAGE_BACKEND", "local")
+STORAGE_BACKEND = os.getenv("STORAGE_BACKEND", "local").strip()
 
 if STORAGE_BACKEND not in ["local", "s3"]:
     raise RuntimeError("STORAGE_BACKEND invalid ! trebue sa fie local sau s3")

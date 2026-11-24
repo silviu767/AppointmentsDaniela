@@ -14,6 +14,7 @@ interface AppointmentsTabProps {
     status: 'confirmed' | 'cancelled_by_admin' | 'no_show' | 'completed'
   ) => void
   onUploadWorkPhoto: (appointmentId: number, file: File) => void
+  onDeletePhoto: (photoId: number) => void
 }
 
 export function AppointmentsTab({
@@ -25,6 +26,7 @@ export function AppointmentsTab({
   onOpenNewAppModal,
   onStatusChange,
   onUploadWorkPhoto,
+  onDeletePhoto,
 }: AppointmentsTabProps) {
   const pendingCount = appointments.filter((a) => a.status === 'pending').length
   const confirmedCount = appointments.filter((a) => a.status === 'confirmed').length
@@ -128,24 +130,50 @@ export function AppointmentsTab({
                   {p.photos && p.photos.length > 0 && (
                     <div style={{ display: 'flex', gap: '8px', marginTop: '8px', flexWrap: 'wrap' }}>
                       {p.photos.map((ph) => (
-                        <a
-                          key={ph.photo_id}
-                          href={resolveImageUrl(ph.image_url)}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                        >
-                          <img
-                            src={resolveImageUrl(ph.image_url)}
-                            alt="Lucrare"
+                        <div key={ph.photo_id} style={{ position: 'relative', display: 'inline-block' }}>
+                          <a
+                            href={resolveImageUrl(ph.image_url)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            <img
+                              src={resolveImageUrl(ph.image_url)}
+                              alt="Lucrare"
+                              style={{
+                                width: '54px',
+                                height: '54px',
+                                objectFit: 'cover',
+                                borderRadius: '8px',
+                                border: '1px solid var(--border-mid)',
+                                display: 'block',
+                              }}
+                            />
+                          </a>
+                          <button
+                            type="button"
+                            title="Șterge poza"
+                            onClick={() => onDeletePhoto(ph.photo_id)}
                             style={{
-                              width: '54px',
-                              height: '54px',
-                              objectFit: 'cover',
-                              borderRadius: '8px',
-                              border: '1px solid var(--border-mid)',
+                              position: 'absolute',
+                              top: '-6px',
+                              right: '-6px',
+                              width: '18px',
+                              height: '18px',
+                              borderRadius: '50%',
+                              background: 'var(--red)',
+                              color: 'white',
+                              border: 'none',
+                              fontSize: '11px',
+                              lineHeight: 1,
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
                             }}
-                          />
-                        </a>
+                          >
+                            ×
+                          </button>
+                        </div>
                       ))}
                     </div>
                   )}

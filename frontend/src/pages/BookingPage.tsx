@@ -29,7 +29,6 @@ export function BookingPage() {
   const [calLuna, setCalLuna] = useState<number>(azi.getMonth())
 
   const [selectedDateKey, setSelectedDateKey] = useState<string | null>(null)
-  const [selectedDayNum, setSelectedDayNum] = useState<number | null>(null)
   const [slots, setSlots] = useState<Slot[]>([])
   const [loadingSlots, setLoadingSlots] = useState<boolean>(false)
   const [selectedSlot, setSelectedSlot] = useState<Slot | null>(null)
@@ -88,13 +87,15 @@ export function BookingPage() {
     setCalAn(newAn)
   }
 
-  const selectedDateLabel =
-    selectedDayNum !== null ? `${selectedDayNum} ${b.months[calLuna]} ${calAn}` : ''
+  const selectedDateLabel = (() => {
+    if (!selectedDateKey) return ''
+    const [y, m, d] = selectedDateKey.split('-').map(Number)
+    return `${d} ${b.months[m - 1]} ${y}`
+  })()
 
-  const handleSelectZi = async (key: string, ziNr: number) => {
+  const handleSelectZi = async (key: string) => {
     if (!selectedService) return
     setSelectedDateKey(key)
-    setSelectedDayNum(ziNr)
     setSelectedSlot(null)
     setLoadingSlots(true)
     setErrorMsg(null)
@@ -172,7 +173,6 @@ export function BookingPage() {
     setPas(1)
     setSelectedService(null)
     setSelectedDateKey(null)
-    setSelectedDayNum(null)
     setSelectedSlot(null)
     setNotes('')
     setErrorMsg(null)
@@ -241,7 +241,6 @@ export function BookingPage() {
               onSelectService={(s) => {
                 setSelectedService(s)
                 setSelectedDateKey(null)
-                setSelectedDayNum(null)
                 setSelectedSlot(null)
                 setErrorMsg(null)
                 setPas(2)

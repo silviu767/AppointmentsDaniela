@@ -361,6 +361,7 @@ export function AdminPage() {
             onOpenNewAppModal={() => setShowNewAppModal(true)}
             onStatusChange={handleStatusChange}
             onUploadWorkPhoto={handleUploadWorkPhoto}
+            onDeletePhoto={handleDeletePhoto}
           />
         )}
 
@@ -399,7 +400,7 @@ export function AdminPage() {
       {showNewAppModal && (
         <NewAppointmentModal
           services={services}
-          defaultServiceId={services[0]?.service_id || 0}
+          defaultServiceId={services.find((s) => s.is_active)?.service_id || 0}
           onClose={() => setShowNewAppModal(false)}
           onSubmit={handleCreateAdminAppointment}
         />
