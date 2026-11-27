@@ -3,6 +3,9 @@ from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 from backend.main import app
 from backend.database import get_db, engine
+from backend.limiter import limiter
+
+limiter.enabled = False
 
 @pytest.fixture()
 def db_session():
@@ -24,3 +27,5 @@ def client(db_session):
         yield TestClient(app)
     finally:
         app.dependency_overrides.clear()
+
+    
