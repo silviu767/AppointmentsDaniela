@@ -29,7 +29,7 @@ def test_create_appointment_and_prevent_double_booking(client, db_session):
     token = login_res.json()["access_token"]
     headers = {"Authorization": f"Bearer {token}"}
 
-    slot_time = datetime.combine(target_date, time(10, 0), tzinfo=BUSINESS_TZ)
+    slot_time = datetime.combine(target_date, time(10, 40), tzinfo=BUSINESS_TZ)
     res1 = client.post("/api/appointments", 
                        headers=headers, 
                        json={"service_id": service.service_id,
@@ -71,7 +71,7 @@ def test_Cancel_appointment_succeeds_over_24h(client, db_session):
     token = login_res.json()["access_token"]
     headers = {"Authorization": f"Bearer {token}"}
     
-    slot_time = datetime.combine(target_date, time(10, 0), tzinfo=BUSINESS_TZ)
+    slot_time = datetime.combine(target_date, time(10, 40), tzinfo=BUSINESS_TZ)
     res1 = client.post("/api/appointments", 
                            headers=headers, 
                            json={"service_id": service.service_id,
@@ -110,7 +110,7 @@ def test_cannot_cancel_another_user_appointment(client, db_session):
     token = login_res.json()["access_token"]
     headers = {"Authorization": f"Bearer {token}"}
     
-    slot_time = datetime.combine(target_date, time(10, 0), tzinfo=BUSINESS_TZ)
+    slot_time = datetime.combine(target_date, time(10, 40), tzinfo=BUSINESS_TZ)
     res = client.post("/api/appointments", 
                            headers=headers, 
                            json={"service_id": service.service_id,

@@ -9,10 +9,16 @@ from backend.repositories import blocked_periods as blocked_periods_repository
 from backend.schemas.slots import SlotOut
 
 BUSINESS_TZ = ZoneInfo("Europe/Paris")
-BUFFER_MINUTES = 10
-STEP_MINUTES = 60
+BUFFER_MINUTES = 0
 MAX_DAYS_AHEAD = 90
 MIN_HOURS_AHEAD = 2
+SLOT_START_TIMES = [
+    time(9,0),
+    time(10, 40),
+    time(12, 10),
+    time(13, 40),
+    time(15, 10),
+]
 
 def is_slot_available(slot_start, busy_until, blocked_periods, appointments, now):
 
@@ -51,16 +57,23 @@ def get_available_slots(db: Session, service_id: int, target_date: date):
     appointments = appointments_repository.get_active_appointments_for_day(db, day_start, day_end)
 
     available_slots = []
+    duration = timedelta(minutes=service.duration_minutes)
 
-    for wh in working_hours:
-        slot_start = datetime.combine(target_date, wh.starts_at, tzinfo=BUSINESS_TZ)
-        work_end = datetime.combine(target_date, wh.ends_at, tzinfo=BUSINESS_TZ)
+    for start_time in SLOT_START_TIMES:
+        slot_start = datetime.combine(target_date, start_time, tzinfo=BUSINESS_TZ)
+        slot_end = slot_start + duration
+        busy_until = slot_end + timedelta(minutes=BUFFER_MINUTES)
 
-        while slot_start + timedelta(minutes=service.duration_minutes) <= work_end:
-            slot_end = slot_start + timedelta(minutes=service.duration_minutes)
-            busy_until = slot_end + timedelta(minutes=BUFFER_MINUTES)
-            if is_slot_available(slot_start, busy_until, blocked_periods, appointments, now):
-                available_slots.append(SlotOut(starts_at = slot_start, ends_at = slot_end))
-            slot_start += timedelta(minutes=STEP_MINUTES)
+        in_working_hours = any(
+            datetime.combine(target_date, wh.starts_at, tzinfo=BUSINESS_TZ) <= slot_start
+            and slot_end <= datetime.combine(target_date, wh.ends_at, tzinfo=BUSINESS_TZ)
+            for wh in working_hours
+        )
+
+        if not in_working_hours:
+            continue
+
+        if is_slot_available(slot_start, busy_until, blocked_periods, appointments, now):
+            available_slots.append(SlotOut(starts_at=slot_start, ends_at=slot_end))
 
     return available_slots
